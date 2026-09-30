@@ -31,7 +31,39 @@ local function main_guard_line(buf)
   return #lines + 1
 end
 
-local function cell_stub()
+--- Marimo markdown cells (0.25 format): `mo.md(...)` cell, plus an
+--- `import marimo as mo` cell when `mo` is not in scope yet.
+---@param has_mo boolean
+local function markdown_cell_lines(has_mo)
+  local lines = {}
+  if not has_mo then
+    vim.list_extend(lines, {
+      "@app.cell",
+      "def _():",
+      "    import marimo as mo",
+      "",
+      "    return (mo,)",
+      "",
+      "",
+    })
+  end
+  vim.list_extend(lines, {
+    "@app.cell(hide_code=True)",
+    "def _(mo):",
+    '    mo.md(r"""',
+    "    # Heading",
+    '    """)',
+    "    return",
+    "",
+  })
+  return lines
+end
+
+---@param markdown? boolean
+local function cell_stub(markdown)
+  if markdown then
+    return markdown_cell_lines(false)
+  end
   return {
     "@app.cell",
     "def __():",
@@ -104,7 +136,8 @@ function M.prev_cell(buf)
 end
 
 ---@param buf? integer
-function M.add_cell_below(buf)
+---@param markdown? boolean
+function M.add_cell_below(buf, markdown)
   buf = buf or vim.api.nvim_get_current_buf()
   local line = vim.api.nvim_win_get_cursor(0)[1]
   local cells = parser.cells_for_buf(buf)
@@ -117,8 +150,21 @@ function M.add_cell_below(buf)
     insert_line = main_guard_line(buf) - 1
   end
 
-  vim.api.nvim_buf_set_lines(buf, insert_line, insert_line, false, cell_stub())
-  util.notify("Added cell")
+  local insert_lines
+  if markdown then
+    local has_mo = false
+    for _, l in ipairs(vim.api.nvim_buf_get_lines(buf, 0, -1, false)) do
+      if l:find("import%s+marimo%s+as%s+mo") then
+        has_mo = true
+        break
+      end
+    end
+    insert_lines = markdown_cell_lines(has_mo)
+  else
+    insert_lines = cell_stub()
+  end
+  vim.api.nvim_buf_set_lines(buf, insert_line, insert_line, false, insert_lines)
+  util.notify(markdown and "Added markdown cell" or "Added cell")
 end
 
 function M.delete_cell(buf)
