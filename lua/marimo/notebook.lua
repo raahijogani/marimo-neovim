@@ -183,4 +183,50 @@ function M.delete_cell(buf)
   util.notify("Deleted cell " .. current.index)
 end
 
+function M.move_cell_down(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+  local line = vim.api.nvim_win_get_cursor(0)[1]
+  local cells = parser.cells_for_buf(buf)
+  local current = parser.cell_at_line(cells, line)
+  if not current then
+    util.notify("No cell under cursor", vim.log.levels.WARN)
+    return
+  end
+
+  local next = cells[current.index + 1]
+  if not next then
+    util.notify("Already at last cell", vim.log.levels.WARN)
+    return
+  end
+
+  local current_lines = vim.api.nvim_buf_get_lines(buf, current.decorator_line - 1, current.end_line, false)
+  local next_lines = vim.api.nvim_buf_get_lines(buf, next.decorator_line - 1, next.end_line, false)
+
+  vim.api.nvim_buf_set_lines(buf, current.decorator_line - 1, next.end_line, false, vim.list_extend(next_lines, current_lines))
+  util.notify("Moved cell down")
+end
+
+function M.move_cell_up(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+  local line = vim.api.nvim_win_get_cursor(0)[1]
+  local cells = parser.cells_for_buf(buf)
+  local current = parser.cell_at_line(cells, line)
+  if not current then
+    util.notify("No cell under cursor", vim.log.levels.WARN)
+    return
+  end
+
+  if current.index <= 1 then
+    util.notify("Already at first cell", vim.log.levels.WARN)
+    return
+  end
+
+  local prev = cells[current.index - 1]
+  local prev_lines = vim.api.nvim_buf_get_lines(buf, prev.decorator_line - 1, prev.end_line, false)
+  local current_lines = vim.api.nvim_buf_get_lines(buf, current.decorator_line - 1, current.end_line, false)
+
+  vim.api.nvim_buf_set_lines(buf, prev.decorator_line - 1, current.end_line, false, vim.list_extend(current_lines, prev_lines))
+  util.notify("Moved cell up")
+end
+
 return M

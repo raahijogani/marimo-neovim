@@ -76,6 +76,14 @@ function M.setup_commands()
     notebook.goto_cell(idx)
   end, { nargs = 1 })
 
+  vim.api.nvim_create_user_command("MarimoCellMoveDown", function()
+    notebook.move_cell_down()
+  end, {})
+
+  vim.api.nvim_create_user_command("MarimoCellMoveUp", function()
+    notebook.move_cell_up()
+  end, {})
+
   vim.api.nvim_create_user_command("MarimoToggleView", function()
     view.toggle()
   end, {})
@@ -85,8 +93,10 @@ function M.setup_keymaps()
   local map = vim.keymap.set
   local opts = { noremap = true, silent = true }
 
-  map("n", "]c", "<cmd>MarimoCellNext<cr>", opts)
-  map("n", "[c", "<cmd>MarimoCellPrev<cr>", opts)
+  map("n", "<leader>mj", "<cmd>MarimoCellNext<cr>", opts)
+  map("n", "<leader>mk", "<cmd>MarimoCellPrev<cr>", opts)
+  map("n", "<leader>mJ", "<cmd>MarimoCellMoveDown<cr>", opts)
+  map("n", "<leader>mK", "<cmd>MarimoCellMoveUp<cr>", opts)
   map("n", "<leader>ma", "<cmd>MarimoCellAddBelow<cr>", opts)
   map("n", "<leader>mm", "<cmd>MarimoCellAddBelow md<cr>", opts)
   map("n", "<leader>md", "<cmd>MarimoCellDelete<cr>", opts)
