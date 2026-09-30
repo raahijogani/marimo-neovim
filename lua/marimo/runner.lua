@@ -113,6 +113,7 @@ function M.run_notebook(file)
     cfg.server_host,
     "--port",
     tostring(cfg.server_port),
+    "--watch",
   })
 
   local job = vim.fn.jobstart(args, {
@@ -214,7 +215,7 @@ function M.start_preview(file)
   local url = string.format("http://%s:%d", cfg.server_host, cfg.server_port)
   state.preview_url = url
 
-  local args = marimo_args({ cfg.preview_command, file, "--host", cfg.server_host, "--port", tostring(cfg.server_port) })
+  local args = marimo_args({ cfg.preview_command, file, "--host", cfg.server_host, "--port", tostring(cfg.server_port), "--watch" })
 
   state.preview_buf = vim.api.nvim_create_buf(false, true)
   vim.bo[state.preview_buf].bufhidden = "wipe"
